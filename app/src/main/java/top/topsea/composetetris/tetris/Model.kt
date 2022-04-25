@@ -17,13 +17,13 @@ enum class Model {
         override val type: Int
             get() = S
         override val values: List<Int>
-            get() = listOf(5, 6, 14, 15)
+            get() = listOf(14, 15, 5, 6, )
     },
     MODEL_Z {
         override val type: Int
             get() = Z
         override val values: List<Int>
-            get() = listOf(4, 5, 15, 16)
+            get() = listOf(5, 15, 4, 16)
     },
     MODEL_I {
         override val type: Int
@@ -41,7 +41,7 @@ enum class Model {
         override val type: Int
             get() = J
         override val values: List<Int>
-            get() = listOf(6, 16, 25, 26)
+            get() = listOf(5, 15, 24, 25)
     };
 
     abstract val type: Int

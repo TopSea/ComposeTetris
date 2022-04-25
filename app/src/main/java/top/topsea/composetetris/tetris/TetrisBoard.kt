@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollScope
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,26 +14,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import top.topsea.composetetris.tetris.Model.*
 import kotlin.math.abs
+import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.min
+
+private val tetris = Array(Tetris.height + 1){ row ->
+    if (row == Tetris.height) {
+        Array(Tetris.width){ 1 }
+    } else {
+        Array(Tetris.width){ 0 }
+    }
+}
 
 @Composable
 fun Tetris() {
-    var curModel = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
-
-    val tetris = Array(Tetris.height + 1){ row ->
-        if (row == Tetris.height) {
-            Array(Tetris.width){ 1 }
-        } else {
-            Array(Tetris.width){ 0 }
-        }
+    val curModel = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
+    var curModelType by remember {
+        mutableStateOf(Int.MAX_VALUE)
     }
 
+    val modelPlaced = remember { mutableStateOf(false) }
 
     val listModel = listOf(MODEL_O, MODEL_T, MODEL_S, MODEL_Z, MODEL_I, MODEL_L, MODEL_J)
 
@@ -63,9 +65,9 @@ fun Tetris() {
             }
             //上正下负
             if (initialVelocity > 0) {
-//                moveLeft(tetris, curModel)
+                rotateModel(tetris, curModel, curModelType)
             } else {
-                moveDown(tetris, curModel)
+                moveDown(tetris, curModel, modelPlaced)
             }
             Log.d("", "GaoHai:::verFling ${initialVelocity}")
             return initialVelocity
@@ -107,7 +109,8 @@ fun Tetris() {
                 tetris[x][y] = 1
             }
 
-            for (x in 0 until Tetris.height) {
+            for (x in 0 .. Tetris.height) {
+                Log.d("", "GaoHai:::${tetris[x].contentToString()}")
                 for (y in 0 until Tetris.width) {
                     val color = if (tetris[x][y] != 0) {
                         Color.Gray
@@ -129,10 +132,22 @@ fun Tetris() {
 
 
     LaunchedEffect(key1 = Unit) {
-        delay(2000)
-        val tempModel = listModel.random().values
-        tempModel.forEachIndexed { index, curr ->
+        val tempModel = listModel[6]
+        curModelType = tempModel.type
+        tempModel.values.forEachIndexed { index, curr ->
             curModel[index] = curr
+        }
+    }
+
+
+    LaunchedEffect(key1 = modelPlaced.value) {
+        if (modelPlaced.value) {
+            val tempModel = listModel.random()
+            curModelType = tempModel.type
+            tempModel.values.forEachIndexed { index, curr ->
+                curModel[index] = curr
+            }
+            modelPlaced.value = false
         }
     }
 }
@@ -199,6 +214,7 @@ private fun moveRight(tetris: Array<Array<Int>>, curModel: SnapshotStateList<Int
 private fun moveDown(
     tetris: Array<Array<Int>>,
     curModel: SnapshotStateList<Int>,
+    modelPlaced: MutableState<Boolean>
 ) {
     var columnStart = 0
     var columnEnd = 0
@@ -211,7 +227,7 @@ private fun moveDown(
         val y = curModel[i] % Tetris.width
         tetris[x][y] = 0
         if (map.contains(y)) {
-            continue
+            map[y] = max(map[y]!!, x)
         } else {
             map[y] = x
         }
@@ -224,18 +240,169 @@ private fun moveDown(
 
     var closest = Tetris.height - 1
     for (y in columnStart .. columnEnd) {
-        for (x in Tetris.height - 1 downTo 0) {
-            if (tetris[x][y] == 0) {
-                closest = min(closest, x - map[y]!!)
-                Log.d("", "GaoHai:::moveDown x - map[y]!! ${x - map[y]!!}  y ${y}")
+        for (x in map[y]!! .. Tetris.height) {
+            if (tetris[x][y] != 0) {
+                closest = min(closest, x - (map[y]!! + 1))
+                Log.d("", "GaoHai:::moveDown x - map[y]!! ${x - map[y]!!}  x ${x}  y ${y}")
                 break
             }
         }
     }
     Log.d("", "GaoHai:::moveDown closest ${closest}")
 
-
-    for (i in curModel.indices.reversed()) {
+    //放置模块
+    for (i in curModel.indices) {
         curModel[i] += closest * Tetris.width
+        val x = curModel[i] / Tetris.width
+        val y = curModel[i] % Tetris.width
+
+        if (y < 0 || y > Tetris.width || x < 0 || x > Tetris.height) {
+            continue
+        }
+        tetris[x][y] = 1
     }
+    modelPlaced.value = true
+}
+
+private fun rotateModel(
+    tetris: Array<Array<Int>>,
+    curModel: SnapshotStateList<Int>,
+    modelType: Int
+) {
+    val pose = modelPose(curModel)
+    if (pose.isEmpty() || !canRotate(tetris, modelType, pose)) {
+        return
+    }
+    Log.d("", "GaoHai:::${curModel.toIntArray().contentToString()}")
+
+    //原先的位置置0
+    for (i in curModel.indices) {
+        if (curModel[i] == Int.MAX_VALUE) {
+            continue
+        }
+        val x = curModel[i] / Tetris.width
+        val y = curModel[i] % Tetris.width
+
+        if (y < 0 || y > Tetris.width || x < 0 || x > Tetris.height) {
+            continue
+        }
+        tetris[x][y] = 0
+    }
+
+    when (modelType) {
+        Model.I -> {
+
+        }
+        else -> {
+            for (i in curModel.indices) {
+                curModel[i] = rotateOnePiece(curModel[1], curModel[i], Tetris.width)
+            }
+        }
+    }
+
+}
+
+private fun modelPose(
+    curModel: SnapshotStateList<Int>,
+): List<Int> {
+    if (curModel.first() == Int.MAX_VALUE) {
+        return listOf()
+    }
+    val firstX: Double = curModel.first().toDouble() / Tetris.width
+    Log.d("", "GaoHai:::firstX${firstX}")
+    val firstY = curModel.first() % Tetris.width
+    Log.d("", "GaoHai:::firstY${firstY}")
+    val secondX = curModel[1] / Tetris.width
+    val secondY = curModel[1] % Tetris.width
+
+    return listOf(floor(firstX).toInt(), firstY, secondX, secondY)
+}
+
+private fun canRotate(
+    tetris: Array<Array<Int>>,
+    modelType: Int,
+    pose: List<Int>
+): Boolean {
+    var ones = 0
+    when(modelType) {
+        Model.J, Model.L, Model.T, Model.Z, Model.S -> {
+            for (x in pose[2] - 1 .. pose[2] + 1) {
+                if (x < 0) {
+                    continue
+                }
+                for (y in pose[3] - 1 .. pose[3] + 1) {
+                    if (y > Tetris.width - 1 || y < 0) {
+                        return false
+                    }
+                    if (tetris[x][y] != 0) {
+                        ones++
+                    }
+                    //是否有位置旋转
+                    if (x > Tetris.height || ones > 4) {
+                        return false
+                    }
+                }
+            }
+        }
+        Model.I -> {
+            for (x in pose[2] - 2 .. pose[2] + 1) {
+                if (x < 0) {
+                    continue
+                }
+                for (y in pose[3] - 2 .. pose[3] + 1) {
+                    if (y > Tetris.width - 1 || y < 0) {
+                        return false
+                    }
+                    if (tetris[x][y] != 0) {
+                        ones++
+                    }
+                    //是否有位置旋转
+                    if (x > Tetris.height || ones > 4) {
+                        return false
+                    }
+                }
+            }
+        }
+        else -> {
+            return false
+        }
+    }
+    return true
+}
+
+private fun rotateOnePiece(
+    center: Int,
+    edge: Int,
+    width: Int
+): Int {
+    when (center - edge) {
+        width + 1 -> {
+            return edge + 2
+        }
+        width -> {
+            return edge + width + 1
+        }
+        width - 1 -> {
+            return edge + width * 2
+        }
+        1 -> {
+            return edge - width + 1
+        }
+        0 -> {
+            return edge
+        }
+        -1 -> {
+            return edge + width - 1
+        }
+        -width + 1 -> {
+            return edge - width * 2
+        }
+        -width -> {
+            return edge - width - 1
+        }
+        -width - 1 -> {
+            return edge - 2
+        }
+    }
+    return Int.MAX_VALUE
 }
