@@ -123,6 +123,21 @@ fun rotateModel(
 
 }
 
+fun eraseLines(
+    tetris: Array<Array<Int>>
+) {
+    val array = Array(WIDTH) { 1 }
+    val lines = mutableListOf<Int>()
+    for (x in 0 until HEIGHT) {
+        if (tetris[x].contentEquals(array)) {
+            lines.add(x)
+            println("gaohai:::x ${x}")
+        }
+    }
+
+    println("gaohai:::lines.size ${lines.size}")
+}
+
 private fun canRotate(
     tetris: Array<Array<Int>>,
     modelType: Int,

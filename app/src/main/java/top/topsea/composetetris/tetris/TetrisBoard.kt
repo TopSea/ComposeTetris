@@ -1,26 +1,25 @@
 package top.topsea.composetetris.tetris
 
 import android.util.Log
+import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.consumeAllChanges
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import top.topsea.composetetris.tetris.Model.*
 import kotlin.math.abs
-import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.min
 
 private val tetris = Array(HEIGHT + 1){ row ->
     if (row == HEIGHT) {
@@ -41,51 +40,41 @@ fun Tetris() {
 
     val listModel = listOf(MODEL_O, MODEL_T, MODEL_S, MODEL_Z, MODEL_I, MODEL_L, MODEL_J)
 
-    val horState = rememberScrollState()
-    val verState = rememberScrollState()
-
-    val horFling = object : FlingBehavior {
-        override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
-            if (abs(initialVelocity) == 0f) {
-                return initialVelocity
-            }
-            //左正右负
-            if (initialVelocity > 0) {
-                moveLeft(tetris, curModel)
-            } else {
-                moveRight(tetris, curModel)
-            }
-            Log.d("", "GaoHai:::horFling ${initialVelocity}")
-            return initialVelocity
-        }
-    }
-    val verFling = object : FlingBehavior {
-        override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
-            if (abs(initialVelocity) == 0f) {
-                return initialVelocity
-            }
-            //上正下负
-            if (initialVelocity > 0) {
-                rotateModel(tetris, curModel, curModelType)
-            } else {
-                moveDown(tetris, curModel, modelPlaced)
-            }
-            Log.d("", "GaoHai:::verFling ${initialVelocity}")
-            return initialVelocity
-        }
-    }
-
+    var offsetX by remember { mutableStateOf(0F) }
+    var offsetY by remember { mutableStateOf(0F) }
     Row(
         modifier = Modifier
             .fillMaxSize()
-            .horizontalScroll(
-                state = horState,
-                flingBehavior = horFling
-            )
-            .verticalScroll(
-                state = verState,
-                flingBehavior = verFling
-            )
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragEnd = {
+                        val x = abs(offsetX)
+                        val y = abs(offsetY)
+                        if (x > y) {
+                            if (offsetX < 0) {
+                                Log.d("", "GaoHai:::detectDragGestures left")
+                                moveLeft(tetris, curModel)
+                            } else {
+                                Log.d("", "GaoHai:::detectDragGestures right")
+                                moveRight(tetris, curModel)
+                            }
+                        } else {
+                            if (offsetY < 0) {
+                                Log.d("", "GaoHai:::detectDragGestures top")
+                                rotateModel(tetris, curModel, curModelType)
+                            } else {
+                                Log.d("", "GaoHai:::detectDragGestures bottom")
+                                moveDown(tetris, curModel, modelPlaced)
+                            }
+                        }
+                        offsetX = 0f
+                        offsetY = 0f
+                    }
+                ) { _, dragAmount ->
+                    offsetX += dragAmount.x
+                    offsetY += dragAmount.y
+                }
+            }
     ) {
         Canvas(
             modifier = Modifier
@@ -143,6 +132,7 @@ fun Tetris() {
             if (!modelPlaced.value) {
                 normalDown(tetris, curModel, modelPlaced)
             }
+            eraseLines(tetris = tetris)
         }
     }
 
@@ -158,4 +148,3 @@ fun Tetris() {
         }
     }
 }
-
