@@ -1,20 +1,15 @@
 package top.topsea.composetetris.tetris
 
 import android.util.Log
-import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.*
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import top.topsea.composetetris.tetris.Model.*
@@ -23,9 +18,9 @@ import kotlin.math.max
 
 private val tetris = Array(HEIGHT + 1){ row ->
     if (row == HEIGHT) {
-        Array(WIDTH){ 1 }
+        IntArray(WIDTH){ 1 }
     } else {
-        Array(WIDTH){ 0 }
+        IntArray(WIDTH){ 0 }
     }
 }
 
@@ -84,7 +79,7 @@ fun Tetris() {
             val rectWidth = size.width / WIDTH
             val rectHeight = size.height / HEIGHT
 
-            val size = Size(rectWidth - 5, rectHeight - 5)
+            val size = max(rectWidth, rectHeight)
 
             for (i in curModel.indices) {
                 if (curModel[i] == Int.MAX_VALUE) {
@@ -99,7 +94,7 @@ fun Tetris() {
                 tetris[x][y] = 1
             }
 
-            for (x in 0 .. HEIGHT) {
+            for (x in 0 until HEIGHT) {
                 for (y in 0 until WIDTH) {
                     val color = if (tetris[x][y] != 0) {
                         Color.Gray
@@ -109,10 +104,10 @@ fun Tetris() {
                     drawRect(
                         color = color,
                         topLeft = Offset(
-                            x = y * rectWidth,
-                            y = x * rectHeight
+                            x = y * size,
+                            y = x * size
                         ),
-                        size = size
+                        size = Size(size - 5, size - 5)
                     )
                 }
             }
@@ -121,24 +116,23 @@ fun Tetris() {
 
 
     LaunchedEffect(key1 = Unit) {
-        val tempModel = listModel[6]
-        curModelType = tempModel.type
-        tempModel.values.forEachIndexed { index, curr ->
+        val firstModel = listModel.random()
+        curModelType = firstModel.type
+        firstModel.values.forEachIndexed { index, curr ->
             curModel[index] = curr
         }
-
         while (true) {
             delay(500)
             if (!modelPlaced.value) {
                 normalDown(tetris, curModel, modelPlaced)
             }
-            eraseLines(tetris = tetris)
         }
     }
 
 
     LaunchedEffect(key1 = modelPlaced.value) {
         if (modelPlaced.value) {
+            eraseLines(tetris = tetris)
             val tempModel = listModel.random()
             curModelType = tempModel.type
             tempModel.values.forEachIndexed { index, curr ->

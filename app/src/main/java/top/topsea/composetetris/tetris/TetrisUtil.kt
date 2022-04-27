@@ -7,15 +7,17 @@ import kotlin.math.max
 import kotlin.math.min
 
 const val WIDTH = 10
-const val HEIGHT = 12
+const val HEIGHT = 16
 
 private const val ACTION_L = 100                //向左滑动
 private const val ACTION_R = 101                //向右滑动
 private const val ACTION_B = 102                //向下滑动
 private const val ACTION_NB = 103                //模块的正常下落
 
+private val array = IntArray(WIDTH){ 1 }
+
 fun normalDown(
-    tetris: Array<Array<Int>>,
+    tetris: Array<IntArray>,
     curModel: SnapshotStateList<Int>,
     modelPlaced: MutableState<Boolean>
 ) {
@@ -37,7 +39,7 @@ fun normalDown(
     }
 }
 
-fun moveLeft(tetris: Array<Array<Int>>, curModel: SnapshotStateList<Int>) {
+fun moveLeft(tetris: Array<IntArray>, curModel: SnapshotStateList<Int>) {
     val step = canDoTheAction(curModel, tetris, ACTION_L)
     if (step > 0) {
         for (i in curModel.size - 1 downTo 0) {
@@ -50,7 +52,7 @@ fun moveLeft(tetris: Array<Array<Int>>, curModel: SnapshotStateList<Int>) {
     }
 }
 
-fun moveRight(tetris: Array<Array<Int>>, curModel: SnapshotStateList<Int>) {
+fun moveRight(tetris: Array<IntArray>, curModel: SnapshotStateList<Int>) {
     val step = canDoTheAction(curModel, tetris, ACTION_R)
     if (step > 0) {
         for (i in curModel.indices) {
@@ -64,7 +66,7 @@ fun moveRight(tetris: Array<Array<Int>>, curModel: SnapshotStateList<Int>) {
 }
 
 fun moveDown(
-    tetris: Array<Array<Int>>,
+    tetris: Array<IntArray>,
     curModel: SnapshotStateList<Int>,
     modelPlaced: MutableState<Boolean>
 ) {
@@ -87,7 +89,7 @@ fun moveDown(
 }
 
 fun rotateModel(
-    tetris: Array<Array<Int>>,
+    tetris: Array<IntArray>,
     curModel: SnapshotStateList<Int>,
     modelType: Int
 ) {
@@ -124,22 +126,21 @@ fun rotateModel(
 }
 
 fun eraseLines(
-    tetris: Array<Array<Int>>
+    tetris: Array<IntArray>
 ) {
-    val array = Array(WIDTH) { 1 }
-    val lines = mutableListOf<Int>()
-    for (x in 0 until HEIGHT) {
-        if (tetris[x].contentEquals(array)) {
-            lines.add(x)
+    for (x in (0 until HEIGHT).reversed()) {
+        while (tetris[x].contentEquals(array)) {
+            for (i in x downTo 1) {
+                tetris[i] = tetris[i - 1]
+            }
+            tetris[0] = IntArray(WIDTH) { 0 }
             println("gaohai:::x ${x}")
         }
     }
-
-    println("gaohai:::lines.size ${lines.size}")
 }
 
 private fun canRotate(
-    tetris: Array<Array<Int>>,
+    tetris: Array<IntArray>,
     modelType: Int,
     curModel: SnapshotStateList<Int>,
 ): Boolean {
@@ -243,7 +244,7 @@ private fun rotateOnePiece(
   */
 fun canDoTheAction(
     curModel: SnapshotStateList<Int>,
-    tetris: Array<Array<Int>>,
+    tetris: Array<IntArray>,
     action: Int
 ) : Int {
     var start = 0
