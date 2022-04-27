@@ -1,6 +1,5 @@
 package top.topsea.composetetris.tetris
 
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlin.math.max
@@ -43,11 +42,7 @@ fun moveLeft(tetris: Array<IntArray>, curModel: SnapshotStateList<Int>) {
     val step = canDoTheAction(curModel, tetris, ACTION_L)
     if (step > 0) {
         for (i in curModel.size - 1 downTo 0) {
-            if (curModel[i] < 0) {
-                curModel[i] += step
-            } else {
-                curModel[i] -= step
-            }
+            curModel[i] -= step
         }
     }
 }
@@ -56,11 +51,7 @@ fun moveRight(tetris: Array<IntArray>, curModel: SnapshotStateList<Int>) {
     val step = canDoTheAction(curModel, tetris, ACTION_R)
     if (step > 0) {
         for (i in curModel.indices) {
-            if (curModel[i] < 0) {
-                curModel[i] -= step
-            } else {
-                curModel[i] += step
-            }
+            curModel[i] += step
         }
     }
 }
@@ -99,7 +90,7 @@ fun rotateModel(
 
     //原先的位置置0
     for (i in curModel.indices) {
-        if (curModel[i] == Int.MAX_VALUE) {
+        if (curModel[i] == Int.MAX_VALUE || curModel[i] < 0) {
             continue
         }
         val x = curModel[i] / WIDTH
@@ -267,6 +258,9 @@ fun canDoTheAction(
         ACTION_B, ACTION_NB -> {
             //记录模块中边界的位置
             for (i in curModel.indices) {
+                if (curModel[i] == Int.MAX_VALUE || curModel[i] < 0) {
+                    continue
+                }
                 val x = curModel[i] / WIDTH
                 val y = curModel[i] % WIDTH
                 tetris[x][y] = 0
@@ -305,6 +299,9 @@ fun canDoTheAction(
         ACTION_L -> {
             //记录模块中边界的位置
             for (i in curModel.indices) {
+                if (curModel[i] == Int.MAX_VALUE || curModel[i] < 0) {
+                    continue
+                }
                 val x = curModel[i] / WIDTH
                 val y = curModel[i] % WIDTH
                 tetris[x][y] = 0
@@ -324,6 +321,9 @@ fun canDoTheAction(
         ACTION_R -> {
             //记录模块中边界的位置
             for (i in curModel.indices) {
+                if (curModel[i] == Int.MAX_VALUE || curModel[i] < 0) {
+                    continue
+                }
                 val x = curModel[i] / WIDTH
                 val y = curModel[i] % WIDTH
                 tetris[x][y] = 0

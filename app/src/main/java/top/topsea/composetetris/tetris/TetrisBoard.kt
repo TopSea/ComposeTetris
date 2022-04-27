@@ -38,6 +38,7 @@ fun Tetris() {
         mutableStateOf(Int.MAX_VALUE)
     }
     val modelPlaced = remember { mutableStateOf(false) }
+    var gameOver by remember { mutableStateOf(false) }
     var offsetX by remember { mutableStateOf(0F) }
     var offsetY by remember { mutableStateOf(0F) }
 
@@ -57,19 +58,21 @@ fun Tetris() {
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragEnd = {
-                            val x = abs(offsetX)
-                            val y = abs(offsetY)
-                            if (x > y) {
-                                if (offsetX < 0) {
-                                    moveLeft(tetris, curModel)
+                            if (!gameOver) {
+                                val x = abs(offsetX)
+                                val y = abs(offsetY)
+                                if (x > y) {
+                                    if (offsetX < 0) {
+                                        moveLeft(tetris, curModel)
+                                    } else {
+                                        moveRight(tetris, curModel)
+                                    }
                                 } else {
-                                    moveRight(tetris, curModel)
-                                }
-                            } else {
-                                if (offsetY < 0) {
-                                    rotateModel(tetris, curModel, curModelType)
-                                } else {
-                                    moveDown(tetris, curModel, modelPlaced)
+                                    if (offsetY < 0) {
+                                        rotateModel(tetris, curModel, curModelType)
+                                    } else {
+                                        moveDown(tetris, curModel, modelPlaced)
+                                    }
                                 }
                             }
                             offsetX = 0f
@@ -80,12 +83,14 @@ fun Tetris() {
                         offsetY += dragAmount.y
                     }
                 }
-                .background(Color.Yellow)
+                .background(
+                    color = if (gameOver) { Color.Red } else { Color.Yellow }
+                )
         ) {
             val curSize = max(size.width / WIDTH, SIZE)
 
             for (i in curModel.indices) {
-                if (curModel[i] == Int.MAX_VALUE) {
+                if (curModel[i] == Int.MAX_VALUE || curModel[i] < 0) {
                     continue
                 }
                 val x = curModel[i] / WIDTH
@@ -110,7 +115,7 @@ fun Tetris() {
                             x = y * curSize,
                             y = x * curSize
                         ),
-                        size = Size(curSize - 5, curSize - 5)
+                        size = Size(curSize - 3, curSize - 3)
                     )
                 }
             }
@@ -119,7 +124,7 @@ fun Tetris() {
 
 
     LaunchedEffect(key1 = Unit) {
-        val firstModel = listModel[4]
+        val firstModel = listModel.random()
         curModelType = firstModel.type
         firstModel.values.forEachIndexed { index, curr ->
             curModel[index] = curr
@@ -132,16 +137,24 @@ fun Tetris() {
         }
     }
 
-
     LaunchedEffect(key1 = modelPlaced.value) {
         if (modelPlaced.value) {
             eraseLines(tetris = tetris)
-            val tempModel = listModel[4]
+            val tempModel = listModel.random()
             curModelType = tempModel.type
             tempModel.values.forEachIndexed { index, curr ->
+                if (curr > 0) {
+                    val x = curr / WIDTH
+                    val y = curr % WIDTH
+                    if (tetris[x][y] != 0) {
+                        gameOver = true
+                    }
+                }
                 curModel[index] = curr
             }
-            modelPlaced.value = false
+            if (!gameOver) {
+                modelPlaced.value = false
+            }
         }
     }
 }

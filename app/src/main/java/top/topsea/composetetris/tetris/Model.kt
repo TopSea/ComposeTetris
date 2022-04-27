@@ -5,43 +5,43 @@ enum class Model {
         override val type: Int
             get() = O
         override val values: List<Int>
-            get() = listOf(4, 5, 14, 15)
+            get() = listOf(-5, -6, 4, 5)
     },
     MODEL_T {
         override val type: Int
             get() = T
         override val values: List<Int>
-            get() = listOf(3, 4, 5, 14)
+            get() = listOf(-5, -6, -7, 4)
     },
     MODEL_S {
         override val type: Int
             get() = S
         override val values: List<Int>
-            get() = listOf(14, 15, 5, 6, )
+            get() = listOf(4, 5, -4, -5)
     },
     MODEL_Z {
         override val type: Int
             get() = Z
         override val values: List<Int>
-            get() = listOf(5, 15, 4, 16)
+            get() = listOf(-6, 5, -5, 6)
     },
     MODEL_I {
         override val type: Int
             get() = I
         override val values: List<Int>
-            get() = listOf(5, 15, 25, 35)
+            get() = listOf(-25, -15, -5, 5)
     },
     MODEL_L {
         override val type: Int
             get() = L
         override val values: List<Int>
-            get() = listOf(5, 15, 25, 26)
+            get() = listOf(-16, -6, 4, 5)
     },
     MODEL_J {
         override val type: Int
             get() = J
         override val values: List<Int>
-            get() = listOf(5, 15, 24, 25)
+            get() = listOf(-15, -5, 4, 5)
     };
 
     abstract val type: Int
