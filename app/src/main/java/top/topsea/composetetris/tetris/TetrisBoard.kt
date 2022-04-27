@@ -119,7 +119,7 @@ fun Tetris() {
 
 
     LaunchedEffect(key1 = Unit) {
-        val firstModel = listModel.random()
+        val firstModel = listModel[4]
         curModelType = firstModel.type
         firstModel.values.forEachIndexed { index, curr ->
             curModel[index] = curr
@@ -136,7 +136,7 @@ fun Tetris() {
     LaunchedEffect(key1 = modelPlaced.value) {
         if (modelPlaced.value) {
             eraseLines(tetris = tetris)
-            val tempModel = listModel.random()
+            val tempModel = listModel[4]
             curModelType = tempModel.type
             tempModel.values.forEachIndexed { index, curr ->
                 curModel[index] = curr

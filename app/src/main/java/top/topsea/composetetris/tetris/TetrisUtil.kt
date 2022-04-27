@@ -113,7 +113,19 @@ fun rotateModel(
 
     when (modelType) {
         Model.I -> {
+            val firstX = curModel.first() / WIDTH
+            val secondX = curModel[1] / WIDTH
 
+            //是不是横着的
+            if (firstX == secondX) {
+                curModel[0] -= (WIDTH * 2 - 2)
+                curModel[1] -= (WIDTH - 1)
+                curModel[3] += (WIDTH - 1)
+            } else {
+                curModel[0] += (WIDTH * 2 - 2)
+                curModel[1] += (WIDTH - 1)
+                curModel[3] -= (WIDTH - 1)
+            }
         }
         else -> {
             for (i in curModel.indices) {
@@ -167,11 +179,13 @@ private fun canRotate(
             }
         }
         Model.I -> {
-            for (x in centerX - 1 .. centerX + 2) {
+            val centerXI = curModel[2] / WIDTH
+            val centerYI = curModel[2] % WIDTH
+            for (x in centerXI - 2 .. centerXI + 1) {
                 if (x < 0) {
                     return false
                 }
-                for (y in centerY - 2 .. centerY + 1) {
+                for (y in centerYI - 2 .. centerYI + 1) {
                     if (y > WIDTH - 1 || y < 0) {
                         return false
                     }
