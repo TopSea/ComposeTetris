@@ -2,9 +2,11 @@ package top.topsea.composetetris.tetris
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -15,6 +17,7 @@ import kotlinx.coroutines.delay
 import top.topsea.composetetris.tetris.Model.*
 import kotlin.math.abs
 import kotlin.math.max
+import androidx.compose.ui.platform.LocalDensity
 
 private val tetris = Array(HEIGHT + 1){ row ->
     if (row == HEIGHT) {
@@ -24,62 +27,62 @@ private val tetris = Array(HEIGHT + 1){ row ->
     }
 }
 
+private const val SIZE = 80f
+
 @Composable
 fun Tetris() {
+    val listModel = listOf(MODEL_O, MODEL_T, MODEL_S, MODEL_Z, MODEL_I, MODEL_L, MODEL_J)
+
     val curModel = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
     var curModelType by remember {
         mutableStateOf(Int.MAX_VALUE)
     }
-
     val modelPlaced = remember { mutableStateOf(false) }
-
-    val listModel = listOf(MODEL_O, MODEL_T, MODEL_S, MODEL_Z, MODEL_I, MODEL_L, MODEL_J)
-
     var offsetX by remember { mutableStateOf(0F) }
     var offsetY by remember { mutableStateOf(0F) }
+
+
+    val requireSize = LocalDensity.current.run { SIZE.toDp() }
+
+
     Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragEnd = {
-                        val x = abs(offsetX)
-                        val y = abs(offsetY)
-                        if (x > y) {
-                            if (offsetX < 0) {
-                                Log.d("", "GaoHai:::detectDragGestures left")
-                                moveLeft(tetris, curModel)
-                            } else {
-                                Log.d("", "GaoHai:::detectDragGestures right")
-                                moveRight(tetris, curModel)
-                            }
-                        } else {
-                            if (offsetY < 0) {
-                                Log.d("", "GaoHai:::detectDragGestures top")
-                                rotateModel(tetris, curModel, curModelType)
-                            } else {
-                                Log.d("", "GaoHai:::detectDragGestures bottom")
-                                moveDown(tetris, curModel, modelPlaced)
-                            }
-                        }
-                        offsetX = 0f
-                        offsetY = 0f
-                    }
-                ) { _, dragAmount ->
-                    offsetX += dragAmount.x
-                    offsetY += dragAmount.y
-                }
-            }
     ) {
         Canvas(
             modifier = Modifier
-                .width(300.dp)
-                .height(300.dp)
+                .requiredHeight(requireSize * HEIGHT)
+                .requiredWidth(requireSize * WIDTH)
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragEnd = {
+                            val x = abs(offsetX)
+                            val y = abs(offsetY)
+                            if (x > y) {
+                                if (offsetX < 0) {
+                                    moveLeft(tetris, curModel)
+                                } else {
+                                    moveRight(tetris, curModel)
+                                }
+                            } else {
+                                if (offsetY < 0) {
+                                    rotateModel(tetris, curModel, curModelType)
+                                } else {
+                                    moveDown(tetris, curModel, modelPlaced)
+                                }
+                            }
+                            offsetX = 0f
+                            offsetY = 0f
+                        }
+                    ) { _, dragAmount ->
+                        offsetX += dragAmount.x
+                        offsetY += dragAmount.y
+                    }
+                }
+                .background(Color.Yellow)
         ) {
-            val rectWidth = size.width / WIDTH
-            val rectHeight = size.height / HEIGHT
-
-            val size = max(rectWidth, rectHeight)
+            val curSize = max(size.width / WIDTH, SIZE)
 
             for (i in curModel.indices) {
                 if (curModel[i] == Int.MAX_VALUE) {
@@ -104,10 +107,10 @@ fun Tetris() {
                     drawRect(
                         color = color,
                         topLeft = Offset(
-                            x = y * size,
-                            y = x * size
+                            x = y * curSize,
+                            y = x * curSize
                         ),
-                        size = Size(size - 5, size - 5)
+                        size = Size(curSize - 5, curSize - 5)
                     )
                 }
             }
@@ -122,7 +125,7 @@ fun Tetris() {
             curModel[index] = curr
         }
         while (true) {
-            delay(500)
+            delay(800)
             if (!modelPlaced.value) {
                 normalDown(tetris, curModel, modelPlaced)
             }

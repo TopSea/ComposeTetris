@@ -96,7 +96,6 @@ fun rotateModel(
     if (!canRotate(tetris, modelType, curModel)) {
         return
     }
-    Log.d("", "GaoHai:::${curModel.toIntArray().contentToString()}")
 
     //原先的位置置0
     for (i in curModel.indices) {
@@ -134,7 +133,6 @@ fun eraseLines(
                 tetris[i] = tetris[i - 1]
             }
             tetris[0] = IntArray(WIDTH) { 0 }
-            println("gaohai:::x ${x}")
         }
     }
 }
@@ -268,23 +266,19 @@ fun canDoTheAction(
                 val tree = map.toSortedMap()
                 start = tree.firstKey()
                 end = tree.lastKey()
-                Log.d("", "GaoHai:::moveDown columnStart ${start} columnEnd ${end}")
 
                 var closest = HEIGHT - 1
                 for (y in start .. end) {
                     for (x in map[y]!! .. HEIGHT) {
                         if (tetris[x][y] != 0) {
                             closest = min(closest, x - (map[y]!! + 1))
-                            Log.d("", "GaoHai:::moveDown x - map[y]!! ${x - map[y]!!}  x ${x}  y ${y}")
                             break
                         }
                     }
                 }
-                Log.d("", "GaoHai:::moveDown closest ${closest}")
                 return closest
             } else {
                 map.forEach { (x, y) ->
-                    Log.d("", "GaoHai:::moveDown x ${x}  y ${y}")
                     if(y >= -1) {
                         if (tetris[y + 1][x] != 0) {
                             return 0
