@@ -1,5 +1,7 @@
 package top.topsea.composetetris
 
+import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,11 +26,43 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import top.topsea.composetetris.tetris.*
 import top.topsea.composetetris.ui.theme.ComposeTetrisTheme
+import java.io.File
 import kotlin.math.abs
+import kotlin.math.max
 
 class MainActivity : ComponentActivity() {
+    private var activity: Activity? = null
+
+    private val tetrisFile = "tetris.dat"
+    private val modelFile = "model.dat"
+
+    private var bestRecord = 0
+    private var exit: (exitHow: String) -> Unit = {}
+    private var modelBefore: List<Int>? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        activity = this
+
+        bestRecord = activity!!.getPreferences(Context.MODE_PRIVATE).getInt(
+            getString(R.string.best_record_sp), 0
+        )
+
+        val tetrisData = File(activity!!.filesDir, tetrisFile)
+        if (tetrisData.exists()) {
+            val dataStr = readArray(applicationContext, tetrisFile)
+            val tempArray = stringToArray(dataStr)
+
+            for (x in 0 until HEIGHT) {
+                for (y in 0 until WIDTH) {
+                    tetris[x][y] = tempArray[x][y]
+                }
+            }
+        }
+
+        val modelData = File(activity!!.filesDir, modelFile)
+        if (modelData.exists()) {
+            modelBefore = readModel(applicationContext, modelFile)
+        }
 
         setContent {
             ComposeTetrisTheme {
@@ -37,19 +71,43 @@ class MainActivity : ComponentActivity() {
                 val currScore = remember { mutableStateOf(0) }
                 val modelPlaced = remember { mutableStateOf(false) }
 
+                var nxtModel by remember { mutableStateOf(Model.MODEL_O) }
+                val currModel = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
+                val currModelList = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
+                val currModelType = remember { mutableStateOf(Int.MAX_VALUE) }
+
+                exit = { exitHow ->
+                    bestRecord = max(bestRecord, currScore.value)
+                    val sharedPref = activity!!.getPreferences(Context.MODE_PRIVATE)
+                    with (sharedPref.edit()) {
+                        putInt(getString(R.string.best_record_sp), bestRecord)
+                        apply()
+                    }
+                    when (exitHow) {
+                        "GAME_OVER" -> {
+//                            val tetris = File(activity!!.filesDir, tetrisFile)
+                            if (tetrisData.exists()) {
+                                tetrisData.delete()
+                            }
+//                            val model = File(activity!!.filesDir, modelFile)
+                            if (modelData.exists()) {
+                                modelData.delete()
+                            }
+                            this.finish()
+                        }
+                        "ON_STOP" -> {
+                            saveArray(applicationContext, tetris, tetrisFile)
+                        }
+                    }
+                }
                 ComeInDialog(justComeIn)
-                GameOverDialog(gameOver, modelPlaced, currScore.value)
+                GameOverDialog(gameOver, modelPlaced, currScore.value, exit)
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
                     val listModel = listOf( Model.MODEL_O, Model.MODEL_T, Model.MODEL_S, Model.MODEL_Z, Model.MODEL_I, Model.MODEL_L, Model.MODEL_J)
-
-                    var nxtModel by remember { mutableStateOf(Model.MODEL_O) }
-                    val currModel = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
-                    val currModelList = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
-                    val currModelType = remember { mutableStateOf(Int.MAX_VALUE) }
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -62,7 +120,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Text(
                                 modifier = Modifier.padding(bottom = 20.dp, start = 20.dp),
-                                text = stringResource(id = R.string.best_record, currScore.value),
+                                text = stringResource(id = R.string.best_record, bestRecord),
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.Gray,
@@ -86,16 +144,23 @@ class MainActivity : ComponentActivity() {
                     }
 
                     LaunchedEffect(key1 = justComeIn.value, key2 = gameOver.value) {
-                        nxtModel = listModel.random()
-                        currModelType.value = nxtModel.type
-                        nxtModel.values.forEachIndexed { index, curr ->
-                            currModel[index] = curr
-                            currModelList[index] = curr
+                        if (modelBefore != null) {
+                            modelBefore!!.forEachIndexed { index, before ->
+                                currModel[index] = before
+                                currModelList[index] = before
+                                modelPlaced.value = false
+                            }
+                        } else {
+                            nxtModel = listModel.random()
+                            currModelType.value = nxtModel.type
+                            nxtModel.values.forEachIndexed { index, curr ->
+                                currModel[index] = curr
+                                currModelList[index] = curr
+                            }
                         }
                         nxtModel = listModel.random()
 
                         if (!justComeIn.value && !gameOver.value) {
-                            println("gaohai:::800")
                             while (true) {
                                 delay(800)
                                 if (!modelPlaced.value) {
@@ -130,6 +195,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+
+    override fun onStop() {
+        exit("ON_STOP")
+        super.onStop()
     }
 }
 
@@ -244,7 +315,8 @@ fun ComeInDialog(
 fun GameOverDialog(
     gameOver: MutableState<Boolean>,
     modelPlaced: MutableState<Boolean>,
-    finalScore: Int
+    finalScore: Int,
+    exit: (exitHow: String) -> Unit
 ) {
     if (gameOver.value) {
         AlertDialog(
@@ -289,7 +361,9 @@ fun GameOverDialog(
             dismissButton = {
                 TextButton(
                     onClick = {
-                        gameOver.value = false
+                        gameOver.value = true
+                        clearBoard()
+                        exit("GAME_OVER")
                     }
                 ) {
                     Text(

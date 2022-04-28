@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">ComposeTetris</string>
 
+    <string name="best_record_sp">best_record_sp</string>
+
     <string name="play_now">Play Now? </string>
     <string name="play_confirm">Confirm</string>
 
