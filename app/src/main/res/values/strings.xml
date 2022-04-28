@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">ComposeTetris</string>
+
+    <string name="best_record">Best Record: %1$d</string>
+    <string name="curr_score">Current Score: %1$d</string>
+    <string name="curr_model">Current: </string>
+    <string name="nxt_model">Next: </string>
 </resources>

@@ -1,25 +1,24 @@
 package top.topsea.composetetris.tetris
 
-import android.util.Log
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import top.topsea.composetetris.tetris.Model.*
+import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.abs
 import kotlin.math.max
-import androidx.compose.ui.platform.LocalDensity
 
-private val tetris = Array(HEIGHT + 1){ row ->
+val tetris = Array(HEIGHT + 1){ row ->
     if (row == HEIGHT) {
         IntArray(WIDTH){ 1 }
     } else {
@@ -27,24 +26,19 @@ private val tetris = Array(HEIGHT + 1){ row ->
     }
 }
 
-private const val SIZE = 80f
+const val SIZE = 80f
 
 @Composable
-fun Tetris() {
-    val listModel = listOf(MODEL_O, MODEL_T, MODEL_S, MODEL_Z, MODEL_I, MODEL_L, MODEL_J)
-
-    val curModel = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
-    var curModelType by remember {
-        mutableStateOf(Int.MAX_VALUE)
-    }
-    val modelPlaced = remember { mutableStateOf(false) }
+fun Tetris(
+    modelPlaced: MutableState<Boolean>,
+    currModel: SnapshotStateList<Int>,
+    currModelType: MutableState<Int>
+) {
     var gameOver by remember { mutableStateOf(false) }
     var offsetX by remember { mutableStateOf(0F) }
     var offsetY by remember { mutableStateOf(0F) }
 
-
     val requireSize = LocalDensity.current.run { SIZE.toDp() }
-
 
     Row(
         horizontalArrangement = Arrangement.Center,
@@ -63,15 +57,15 @@ fun Tetris() {
                                 val y = abs(offsetY)
                                 if (x > y) {
                                     if (offsetX < 0) {
-                                        moveLeft(tetris, curModel)
+                                        moveLeft(currModel)
                                     } else {
-                                        moveRight(tetris, curModel)
+                                        moveRight(currModel)
                                     }
                                 } else {
                                     if (offsetY < 0) {
-                                        rotateModel(tetris, curModel, curModelType)
+                                        rotateModel(currModel, currModelType)
                                     } else {
-                                        moveDown(tetris, curModel, modelPlaced)
+                                        moveDown(currModel, modelPlaced)
                                     }
                                 }
                             }
@@ -83,18 +77,15 @@ fun Tetris() {
                         offsetY += dragAmount.y
                     }
                 }
-                .background(
-                    color = if (gameOver) { Color.Red } else { Color.Yellow }
-                )
         ) {
             val curSize = max(size.width / WIDTH, SIZE)
 
-            for (i in curModel.indices) {
-                if (curModel[i] == Int.MAX_VALUE || curModel[i] < 0) {
+            for (i in currModel.indices) {
+                if (currModel[i] == Int.MAX_VALUE || currModel[i] < 0) {
                     continue
                 }
-                val x = curModel[i] / WIDTH
-                val y = curModel[i] % WIDTH
+                val x = currModel[i] / WIDTH
+                val y = currModel[i] % WIDTH
 
                 if (y < 0 || y > WIDTH || x < 0 || x > HEIGHT) {
                     continue
@@ -118,42 +109,6 @@ fun Tetris() {
                         size = Size(curSize - 3, curSize - 3)
                     )
                 }
-            }
-        }
-    }
-
-
-    LaunchedEffect(key1 = Unit) {
-        val firstModel = listModel.random()
-        curModelType = firstModel.type
-        firstModel.values.forEachIndexed { index, curr ->
-            curModel[index] = curr
-        }
-        while (true) {
-            delay(800)
-            if (!modelPlaced.value) {
-                normalDown(tetris, curModel, modelPlaced)
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = modelPlaced.value) {
-        if (modelPlaced.value) {
-            eraseLines(tetris = tetris)
-            val tempModel = listModel.random()
-            curModelType = tempModel.type
-            tempModel.values.forEachIndexed { index, curr ->
-                if (curr > 0) {
-                    val x = curr / WIDTH
-                    val y = curr % WIDTH
-                    if (tetris[x][y] != 0) {
-                        gameOver = true
-                    }
-                }
-                curModel[index] = curr
-            }
-            if (!gameOver) {
-                modelPlaced.value = false
             }
         }
     }

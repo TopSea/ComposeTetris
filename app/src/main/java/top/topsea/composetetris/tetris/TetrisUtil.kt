@@ -16,11 +16,10 @@ private const val ACTION_NB = 103                //模块的正常下落
 private val array = IntArray(WIDTH){ 1 }
 
 fun normalDown(
-    tetris: Array<IntArray>,
     curModel: SnapshotStateList<Int>,
     modelPlaced: MutableState<Boolean>
 ) {
-    val step = canDoTheAction(curModel, tetris, ACTION_NB)
+    val step = canDoTheAction(curModel, ACTION_NB)
 
     //放置模块
     for (i in curModel.indices) {
@@ -38,8 +37,8 @@ fun normalDown(
     }
 }
 
-fun moveLeft(tetris: Array<IntArray>, curModel: SnapshotStateList<Int>) {
-    val step = canDoTheAction(curModel, tetris, ACTION_L)
+fun moveLeft(curModel: SnapshotStateList<Int>) {
+    val step = canDoTheAction(curModel, ACTION_L)
     if (step > 0) {
         for (i in curModel.size - 1 downTo 0) {
             curModel[i] -= step
@@ -47,8 +46,8 @@ fun moveLeft(tetris: Array<IntArray>, curModel: SnapshotStateList<Int>) {
     }
 }
 
-fun moveRight(tetris: Array<IntArray>, curModel: SnapshotStateList<Int>) {
-    val step = canDoTheAction(curModel, tetris, ACTION_R)
+fun moveRight(curModel: SnapshotStateList<Int>) {
+    val step = canDoTheAction(curModel, ACTION_R)
     if (step > 0) {
         for (i in curModel.indices) {
             curModel[i] += step
@@ -57,11 +56,10 @@ fun moveRight(tetris: Array<IntArray>, curModel: SnapshotStateList<Int>) {
 }
 
 fun moveDown(
-    tetris: Array<IntArray>,
     curModel: SnapshotStateList<Int>,
     modelPlaced: MutableState<Boolean>
 ) {
-    val step = canDoTheAction(curModel, tetris, ACTION_B)
+    val step = canDoTheAction(curModel, ACTION_B)
 
     if (step > 0) {
         //放置模块
@@ -80,11 +78,10 @@ fun moveDown(
 }
 
 fun rotateModel(
-    tetris: Array<IntArray>,
     curModel: SnapshotStateList<Int>,
-    modelType: Int
+    modelType: MutableState<Int>
 ) {
-    if (!canRotate(tetris, modelType, curModel)) {
+    if (!canRotate(modelType.value, curModel)) {
         return
     }
 
@@ -102,7 +99,7 @@ fun rotateModel(
         tetris[x][y] = 0
     }
 
-    when (modelType) {
+    when (modelType.value) {
         Model.I -> {
             val firstX = curModel.first() / WIDTH
             val secondX = curModel[1] / WIDTH
@@ -128,10 +125,11 @@ fun rotateModel(
 }
 
 fun eraseLines(
-    tetris: Array<IntArray>
+    currScore: MutableState<Int>
 ) {
     for (x in (0 until HEIGHT).reversed()) {
         while (tetris[x].contentEquals(array)) {
+            currScore.value += 10
             for (i in x downTo 1) {
                 tetris[i] = tetris[i - 1]
             }
@@ -141,7 +139,6 @@ fun eraseLines(
 }
 
 private fun canRotate(
-    tetris: Array<IntArray>,
     modelType: Int,
     curModel: SnapshotStateList<Int>,
 ): Boolean {
@@ -149,6 +146,7 @@ private fun canRotate(
 
     val centerX = curModel[1] / WIDTH
     val centerY = curModel[1] % WIDTH
+
     when(modelType) {
         Model.J, Model.L, Model.T, Model.Z, Model.S -> {
             for (x in centerX - 1 .. centerX + 1) {
@@ -247,7 +245,6 @@ private fun rotateOnePiece(
   */
 fun canDoTheAction(
     curModel: SnapshotStateList<Int>,
-    tetris: Array<IntArray>,
     action: Int
 ) : Int {
     var start = 0
