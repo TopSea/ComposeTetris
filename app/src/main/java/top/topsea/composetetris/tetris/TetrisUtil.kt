@@ -2,6 +2,9 @@ package top.topsea.composetetris.tetris
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import kotlin.math.max
 import kotlin.math.min
 
@@ -14,6 +17,14 @@ private const val ACTION_B = 102                //向下滑动
 private const val ACTION_NB = 103                //模块的正常下落
 
 private val array = IntArray(WIDTH){ 1 }
+
+fun clearBoard() {
+    for (x in 0 until HEIGHT) {
+        for (y in 0 until WIDTH) {
+            tetris[x][y] = 0
+        }
+    }
+}
 
 fun normalDown(
     curModel: SnapshotStateList<Int>,
@@ -243,7 +254,7 @@ private fun rotateOnePiece(
   * @param action: 需要判断的操作
   * @return 等于0表示不能进行操作
   */
-fun canDoTheAction(
+private fun canDoTheAction(
     curModel: SnapshotStateList<Int>,
     action: Int
 ) : Int {

@@ -30,11 +30,11 @@ const val SIZE = 80f
 
 @Composable
 fun Tetris(
+    gameOver: MutableState<Boolean>,
     modelPlaced: MutableState<Boolean>,
     currModel: SnapshotStateList<Int>,
     currModelType: MutableState<Int>
 ) {
-    var gameOver by remember { mutableStateOf(false) }
     var offsetX by remember { mutableStateOf(0F) }
     var offsetY by remember { mutableStateOf(0F) }
 
@@ -52,7 +52,7 @@ fun Tetris(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragEnd = {
-                            if (!gameOver) {
+                            if (!gameOver.value) {
                                 val x = abs(offsetX)
                                 val y = abs(offsetY)
                                 if (x > y) {

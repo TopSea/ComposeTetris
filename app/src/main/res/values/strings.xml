@@ -1,6 +1,14 @@
 <resources>
     <string name="app_name">ComposeTetris</string>
 
+    <string name="play_now">Play Now? </string>
+    <string name="play_confirm">Confirm</string>
+
+    <string name="game_over">Lost</string>
+    <string name="final_score">Your final score is: %1$d</string>
+    <string name="game_over_quit">Quit</string>
+    <string name="game_over_again">Again</string>
+
     <string name="best_record">Best Record: %1$d</string>
     <string name="curr_score">Current Score: %1$d</string>
     <string name="curr_model">Current: </string>

@@ -5,14 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -32,21 +29,27 @@ import kotlin.math.abs
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             ComposeTetrisTheme {
+                val justComeIn = remember { mutableStateOf(true) }
+                val gameOver = remember { mutableStateOf(false) }
+                val currScore = remember { mutableStateOf(0) }
+                val modelPlaced = remember { mutableStateOf(false) }
+
+                ComeInDialog(justComeIn)
+                GameOverDialog(gameOver, modelPlaced, currScore.value)
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
                     val listModel = listOf( Model.MODEL_O, Model.MODEL_T, Model.MODEL_S, Model.MODEL_Z, Model.MODEL_I, Model.MODEL_L, Model.MODEL_J)
 
-                    var gameOver by remember { mutableStateOf(false) }
-                    var nxtModel by remember { mutableStateOf(listModel.random()) }
+                    var nxtModel by remember { mutableStateOf(Model.MODEL_O) }
                     val currModel = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
                     val currModelList = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
                     val currModelType = remember { mutableStateOf(Int.MAX_VALUE) }
-                    val currScore = remember { mutableStateOf(0) }
-                    val modelPlaced = remember { mutableStateOf(false) }
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -73,25 +76,31 @@ class MainActivity : ComponentActivity() {
                             fontWeight = FontWeight.Bold,
                             fontSize = 30.sp
                         )
-                        GameInfo(currModelList, nxtModel)
+                        ModelInfo(currModelList, nxtModel)
                         Tetris(
+                            gameOver = gameOver,
                             modelPlaced = modelPlaced,
                             currModel = currModel,
                             currModelType = currModelType
                         )
                     }
 
-                    LaunchedEffect(key1 = Unit) {
+                    LaunchedEffect(key1 = justComeIn.value, key2 = gameOver.value) {
+                        nxtModel = listModel.random()
                         currModelType.value = nxtModel.type
                         nxtModel.values.forEachIndexed { index, curr ->
                             currModel[index] = curr
                             currModelList[index] = curr
                         }
                         nxtModel = listModel.random()
-                        while (true) {
-                            delay(800)
-                            if (!modelPlaced.value) {
-                                normalDown(currModel, modelPlaced)
+
+                        if (!justComeIn.value && !gameOver.value) {
+                            println("gaohai:::800")
+                            while (true) {
+                                delay(800)
+                                if (!modelPlaced.value) {
+                                    normalDown(currModel, modelPlaced)
+                                }
                             }
                         }
                     }
@@ -106,13 +115,13 @@ class MainActivity : ComponentActivity() {
                                     val x = curr / WIDTH
                                     val y = curr % WIDTH
                                     if (tetris[x][y] != 0) {
-                                        gameOver = true
+                                        gameOver.value = true
                                     }
                                 }
                                 currModel[index] = curr
                                 currModelList[index] = curr
                             }
-                            if (!gameOver) {
+                            if (!gameOver.value) {
                                 nxtModel = listModel.random()
                                 modelPlaced.value = false
                             }
@@ -125,7 +134,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun GameInfo(
+fun ModelInfo(
     currModel: List<Int>,
     nxtModel: Model,
 ) {
@@ -186,5 +195,111 @@ fun GameInfo(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun ComeInDialog(
+    justComeIn: MutableState<Boolean>
+) {
+    if (justComeIn.value) {
+        AlertDialog(
+            onDismissRequest = { },
+            text = {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.play_now),
+                        fontFamily = FontFamily.Cursive,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 30.sp,
+                    )
+                }
+            },
+            confirmButton = {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(
+                        onClick = {
+                            justComeIn.value = false
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.play_confirm),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                        )
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun GameOverDialog(
+    gameOver: MutableState<Boolean>,
+    modelPlaced: MutableState<Boolean>,
+    finalScore: Int
+) {
+    if (gameOver.value) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.game_over),
+                        fontFamily = FontFamily.Default,
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 30.sp,
+                    )
+                }
+            },
+            text = {
+                Text(
+                    text = stringResource(id = R.string.final_score, finalScore),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        gameOver.value = false
+                        modelPlaced.value = false
+                        clearBoard()
+                    }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.game_over_again),
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Cursive,
+                        fontSize = 20.sp,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        gameOver.value = false
+                    }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.game_over_quit),
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Cursive,
+                        fontSize = 20.sp,
+                    )
+                }
+            }
+        )
     }
 }
