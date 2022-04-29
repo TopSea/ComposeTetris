@@ -85,11 +85,9 @@ class MainActivity : ComponentActivity() {
                     }
                     when (exitHow) {
                         "GAME_OVER" -> {
-//                            val tetris = File(activity!!.filesDir, tetrisFile)
                             if (tetrisData.exists()) {
                                 tetrisData.delete()
                             }
-//                            val model = File(activity!!.filesDir, modelFile)
                             if (modelData.exists()) {
                                 modelData.delete()
                             }
@@ -97,6 +95,7 @@ class MainActivity : ComponentActivity() {
                         }
                         "ON_STOP" -> {
                             saveArray(applicationContext, tetris, tetrisFile)
+                            saveModel(applicationContext, currModel, modelFile)
                         }
                     }
                 }
@@ -202,6 +201,10 @@ class MainActivity : ComponentActivity() {
         exit("ON_STOP")
         super.onStop()
     }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+    }
 }
 
 @Composable
@@ -266,114 +269,5 @@ fun ModelInfo(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun ComeInDialog(
-    justComeIn: MutableState<Boolean>
-) {
-    if (justComeIn.value) {
-        AlertDialog(
-            onDismissRequest = { },
-            text = {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.play_now),
-                        fontFamily = FontFamily.Cursive,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 30.sp,
-                    )
-                }
-            },
-            confirmButton = {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    TextButton(
-                        onClick = {
-                            justComeIn.value = false
-                        }
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.play_confirm),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                        )
-                    }
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun GameOverDialog(
-    gameOver: MutableState<Boolean>,
-    modelPlaced: MutableState<Boolean>,
-    finalScore: Int,
-    exit: (exitHow: String) -> Unit
-) {
-    if (gameOver.value) {
-        AlertDialog(
-            onDismissRequest = { },
-            title = {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.game_over),
-                        fontFamily = FontFamily.Default,
-                        color = Color.Red,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 30.sp,
-                    )
-                }
-            },
-            text = {
-                Text(
-                    text = stringResource(id = R.string.final_score, finalScore),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        gameOver.value = false
-                        modelPlaced.value = false
-                        clearBoard()
-                    }
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.game_over_again),
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Cursive,
-                        fontSize = 20.sp,
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        gameOver.value = true
-                        clearBoard()
-                        exit("GAME_OVER")
-                    }
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.game_over_quit),
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Cursive,
-                        fontSize = 20.sp,
-                    )
-                }
-            }
-        )
     }
 }

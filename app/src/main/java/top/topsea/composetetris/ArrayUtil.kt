@@ -107,10 +107,9 @@ fun readModel(context: Context, fileName: String): List<Int> {
     val stringBuilder = java.lang.StringBuilder()
     try {
         BufferedReader(inputStreamReader).use { reader ->
-            var line: String = reader.readLine()
-            while (line.isNotEmpty()) {
-                stringBuilder.append(line).append('\n')
-                line = reader.readLine()
+            val line: String = reader.readLine()
+            if (line.isNotEmpty()) {
+                stringBuilder.append(line)
             }
         }
     } catch (e: IOException) {
@@ -121,7 +120,11 @@ fun readModel(context: Context, fileName: String): List<Int> {
     }
     val strList = stringBuilder.toString().split(" ")
 
-    return List(strList.size) { i ->
-        strList[i].toInt()
+    val tempList = mutableListOf<Int>()
+    strList.forEach { s ->
+        if (s.isNotEmpty()) {
+            tempList.add(s.toInt())
+        }
     }
+    return tempList
 }
