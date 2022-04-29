@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">ComposeTetris</string>
+
+    <string name="play_now">开始游戏？</string>
+    <string name="continue_before">继续游戏</string>
+    <string name="play_confirm">确认</string>
+
+    <string name="game_over">游戏结束</string>
+    <string name="final_score">你的最终得分是：%1$d</string>
+    <string name="game_over_quit">退出</string>
+    <string name="game_over_again">再来！</string>
+
+    <string name="best_record">最佳纪录：%1$d</string>
+    <string name="curr_score">当前得分：%1$d</string>
+    <string name="curr_model">当前模块：</string>
+    <string name="nxt_model">下一个模块：</string>
+</resources>
