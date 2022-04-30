@@ -1,5 +1,9 @@
 package top.topsea.composetetris.tetris
 
+import android.content.Context
+import java.io.FileOutputStream
+import java.io.ObjectOutputStream
+
 enum class Model {
     MODEL_O {
         override val type: Int
@@ -55,5 +59,31 @@ enum class Model {
         const val I = 74
         const val L = 75
         const val J = 76
+
+        fun returnModel(type: Int): Model {
+            return when (type) {
+                O -> {
+                    MODEL_O
+                }
+                T -> {
+                    MODEL_T
+                }
+                S -> {
+                    MODEL_S
+                }
+                Z -> {
+                    MODEL_Z
+                }
+                L -> {
+                    MODEL_L
+                }
+                I -> {
+                    MODEL_I
+                }
+                else -> {
+                    MODEL_J
+                }
+            }
+        }
     }
 }

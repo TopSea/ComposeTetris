@@ -1,6 +1,8 @@
 package top.topsea.composetetris
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -23,6 +25,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.DialogCompat
 import kotlinx.coroutines.delay
 import top.topsea.composetetris.tetris.*
 import top.topsea.composetetris.ui.theme.ComposeTetrisTheme
@@ -38,17 +41,20 @@ class MainActivity : ComponentActivity() {
 
     private var bestRecord = 0
     private var exit: (exitHow: String) -> Unit = {}
-    private var modelBefore: List<Int>? = null
+    private var modelRecord: Int = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activity = this
 
-        bestRecord = activity!!.getPreferences(Context.MODE_PRIVATE).getInt(
+        val sharedPreferences = activity!!.getPreferences(Context.MODE_PRIVATE)
+        bestRecord = sharedPreferences.getInt(
             getString(R.string.best_record_sp), 0
         )
-
         val tetrisData = File(activity!!.filesDir, tetrisFile)
-        if (tetrisData.exists()) {
+
+        val hasRecord = tetrisData.exists()
+        var modelData: List<Int>? = null
+        if (hasRecord) {
             val dataStr = readArray(applicationContext, tetrisFile)
             val tempArray = stringToArray(dataStr)
 
@@ -57,56 +63,99 @@ class MainActivity : ComponentActivity() {
                     tetris[x][y] = tempArray[x][y]
                 }
             }
-        }
 
-        val modelData = File(activity!!.filesDir, modelFile)
-        if (modelData.exists()) {
-            modelBefore = readModel(applicationContext, modelFile)
+            modelData = readModel(applicationContext, modelFile)
+            modelRecord = sharedPreferences.getInt(
+                getString(R.string.model_type_record), 0
+            )
         }
 
         setContent {
             ComposeTetrisTheme {
-                val justComeIn = remember { mutableStateOf(true) }
-                val gameOver = remember { mutableStateOf(false) }
                 val currScore = remember { mutableStateOf(0) }
+                val newGame = remember { mutableStateOf(false) }
+                val gameOver = remember { mutableStateOf(false) }
                 val modelPlaced = remember { mutableStateOf(false) }
+                val gameStop = remember { mutableStateOf(true) }
+                val exitConfirm = remember { mutableStateOf(false) }
 
                 var nxtModel by remember { mutableStateOf(Model.MODEL_O) }
-                val currModel = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
-                val currModelList = remember { mutableStateListOf(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE) }
+                val currModel = remember {
+                    mutableStateListOf(
+                        Int.MAX_VALUE,
+                        Int.MAX_VALUE,
+                        Int.MAX_VALUE,
+                        Int.MAX_VALUE
+                    )
+                }
+                val currModelList = remember {
+                    mutableStateListOf(
+                        Int.MAX_VALUE,
+                        Int.MAX_VALUE,
+                        Int.MAX_VALUE,
+                        Int.MAX_VALUE
+                    )
+                }
                 val currModelType = remember { mutableStateOf(Int.MAX_VALUE) }
 
                 exit = { exitHow ->
                     bestRecord = max(bestRecord, currScore.value)
-                    val sharedPref = activity!!.getPreferences(Context.MODE_PRIVATE)
-                    with (sharedPref.edit()) {
+                    with(sharedPreferences.edit()) {
                         putInt(getString(R.string.best_record_sp), bestRecord)
                         apply()
                     }
                     when (exitHow) {
                         "GAME_OVER" -> {
                             if (tetrisData.exists()) {
-                                tetrisData.delete()
-                            }
-                            if (modelData.exists()) {
-                                modelData.delete()
+                                println("gaohai:::${tetrisData.delete()}")
+                                with(sharedPreferences.edit()) {
+                                    putInt(getString(R.string.model_type_record), 0)
+                                    apply()
+                                }
                             }
                             this.finish()
                         }
-                        "ON_STOP" -> {
+                        "QUIT" -> {
                             saveArray(applicationContext, tetris, tetrisFile)
                             saveModel(applicationContext, currModel, modelFile)
+                            with(sharedPreferences.edit()) {
+                                putInt(getString(R.string.model_type_record), currModelType.value)
+                                apply()
+                            }
+                            this.finish()
+                        }
+                        "STOP" -> {
+                            gameStop.value = true
+                            exitConfirm.value = true
                         }
                     }
                 }
-                ComeInDialog(justComeIn)
+                ComeInDialog(
+                    hasRecord,
+                    confirm = {
+                        gameStop.value = false
+                    },
+                    dismiss = {
+                        newGame.value = true
+                        gameStop.value = false
+                    }
+                )
                 GameOverDialog(gameOver, modelPlaced, currScore.value, exit)
+                ExitDialog(
+                    exitConfirm,
+                    confirm = {
+                        exit("QUIT")
+                    },
+                    dismiss = {
+                        gameStop.value = false
+                    }
+                )
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    val listModel = listOf( Model.MODEL_O, Model.MODEL_T, Model.MODEL_S, Model.MODEL_Z, Model.MODEL_I, Model.MODEL_L, Model.MODEL_J)
+                    val listModel = listOf(Model.MODEL_O, Model.MODEL_T, Model.MODEL_S, Model.MODEL_Z, Model.MODEL_I, Model.MODEL_L, Model.MODEL_J)
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -142,14 +191,18 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    LaunchedEffect(key1 = justComeIn.value, key2 = gameOver.value) {
-                        if (modelBefore != null) {
-                            modelBefore!!.forEachIndexed { index, before ->
+                    LaunchedEffect(key1 = newGame.value) {
+                        if (!newGame.value) {
+                            modelData!!.forEachIndexed { index, before ->
                                 currModel[index] = before
-                                currModelList[index] = before
-                                modelPlaced.value = false
                             }
+                            val tempModel = Model.returnModel(modelRecord)
+                            tempModel.values.forEachIndexed { index, before ->
+                                currModelList[index] = before
+                            }
+                            currModelType.value = modelRecord
                         } else {
+                            clearBoard()
                             nxtModel = listModel.random()
                             currModelType.value = nxtModel.type
                             nxtModel.values.forEachIndexed { index, curr ->
@@ -157,9 +210,13 @@ class MainActivity : ComponentActivity() {
                                 currModelList[index] = curr
                             }
                         }
-                        nxtModel = listModel.random()
 
-                        if (!justComeIn.value && !gameOver.value) {
+                        modelPlaced.value = false
+                        nxtModel = listModel.random()
+                    }
+
+                    LaunchedEffect(key1 = gameStop.value) {
+                        if (!gameStop.value) {
                             while (true) {
                                 delay(800)
                                 if (!modelPlaced.value) {
@@ -196,14 +253,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
     override fun onStop() {
-        exit("ON_STOP")
+        exit("QUIT")
         super.onStop()
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
+        exit("STOP")
     }
 }
 
@@ -223,9 +279,10 @@ fun ModelInfo(
             fontFamily = FontFamily.Serif,
             fontSize = 18.sp
         )
-        Canvas(modifier = Modifier
-            .requiredSize(requireSize)
-            .padding(8.dp)
+        Canvas(
+            modifier = Modifier
+                .requiredSize(requireSize)
+                .padding(8.dp)
         ) {
             val upSteps = abs(currModel.minOrNull()!! / WIDTH) + 1
             currModel.forEachIndexed { _, v ->
@@ -239,7 +296,7 @@ fun ModelInfo(
                         x = y * SIZE * 0.5f,
                         y = x * SIZE * 0.5f
                     ),
-                    size = Size( (SIZE - 3) * 0.5f,  (SIZE - 3) * 0.5f)
+                    size = Size((SIZE - 3) * 0.5f, (SIZE - 3) * 0.5f)
                 )
             }
         }
@@ -249,9 +306,10 @@ fun ModelInfo(
             fontFamily = FontFamily.Serif,
             fontSize = 18.sp
         )
-        Canvas(modifier = Modifier
-            .requiredSize(requireSize)
-            .padding(8.dp)
+        Canvas(
+            modifier = Modifier
+                .requiredSize(requireSize)
+                .padding(8.dp)
         ) {
             val upSteps = abs(nxtModel.values.minOrNull()!! / WIDTH) + 1
             nxtModel.values.forEachIndexed { _, v ->
@@ -265,7 +323,7 @@ fun ModelInfo(
                         x = y * SIZE * 0.5f,
                         y = x * SIZE * 0.5f
                     ),
-                    size = Size( (SIZE - 3) * 0.5f,  (SIZE - 3) * 0.5f)
+                    size = Size((SIZE - 3) * 0.5f, (SIZE - 3) * 0.5f)
                 )
             }
         }

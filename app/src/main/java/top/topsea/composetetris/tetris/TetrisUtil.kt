@@ -95,6 +95,7 @@ fun rotateModel(
     if (!canRotate(modelType.value, curModel)) {
         return
     }
+    println("gaoha:::rotateModel")
 
     //原先的位置置0
     for (i in curModel.indices) {

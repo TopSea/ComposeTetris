@@ -2,15 +2,21 @@
     <string name="app_name">ComposeTetris</string>
 
     <string name="best_record_sp" translatable="false">best_record_sp</string>
+    <string name="model_type_record" translatable="false">model_record</string>
 
     <string name="play_now">Play Now? </string>
+    <string name="game_continue">Continue? </string>
     <string name="continue_before">Continue</string>
+    <string name="game_new">New Game</string>
     <string name="play_confirm">Confirm</string>
 
     <string name="game_over">Lost</string>
     <string name="final_score">Your final score is: %1$d</string>
-    <string name="game_over_quit">Quit</string>
+    <string name="quit_game">Quit</string>
     <string name="game_over_again">Again</string>
+
+    <string name="quit_game_confirm">Quit？</string>
+    <string name="quit_later">Later</string>
 
     <string name="best_record">Best Record: %1$d</string>
     <string name="curr_score">Current Score: %1$d</string>

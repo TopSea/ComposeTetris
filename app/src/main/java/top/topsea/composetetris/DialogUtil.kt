@@ -7,6 +7,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,18 +28,23 @@ import top.topsea.composetetris.tetris.clearBoard
  **/
 @Composable
 fun ComeInDialog(
-    justComeIn: MutableState<Boolean>
+    hasRecord: Boolean,
+    confirm: () -> Unit,
+    dismiss: () -> Unit,
 ) {
-    if (justComeIn.value) {
+    var showThis by remember { mutableStateOf(true) }
+    if (showThis) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showThis = false },
             text = {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = stringResource(id = R.string.play_now),
+                        text = if (hasRecord) stringResource(id = R.string.game_continue) else stringResource(
+                            id = R.string.play_now
+                        ),
                         fontFamily = FontFamily.Cursive,
                         fontWeight = FontWeight.Bold,
                         fontSize = 30.sp,
@@ -45,23 +52,35 @@ fun ComeInDialog(
                 }
             },
             confirmButton = {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxWidth()
+                TextButton(
+                    onClick = {
+                        showThis = false
+                        confirm()
+                    }
                 ) {
+                    Text(
+                        text = stringResource(id = R.string.continue_before),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                    )
+                }
+            },
+            dismissButton = if (hasRecord) {
+                {
                     TextButton(
                         onClick = {
-                            justComeIn.value = false
+                            showThis = false
+                            dismiss()
                         }
                     ) {
                         Text(
-                            text = stringResource(id = R.string.play_confirm),
+                            text = stringResource(id = R.string.game_new),
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp,
                         )
                     }
                 }
-            }
+            } else null
         )
     }
 }
@@ -122,7 +141,7 @@ fun GameOverDialog(
                     }
                 ) {
                     Text(
-                        text = stringResource(id = R.string.game_over_quit),
+                        text = stringResource(id = R.string.quit_game),
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Cursive,
                         fontSize = 20.sp,
@@ -132,9 +151,12 @@ fun GameOverDialog(
         )
     }
 }
+
 @Composable
 fun ExitDialog(
-    exitConfirm: MutableState<Boolean>
+    exitConfirm: MutableState<Boolean>,
+    confirm: () -> Unit,
+    dismiss: () -> Unit,
 ) {
     if (exitConfirm.value) {
         AlertDialog(
@@ -145,7 +167,7 @@ fun ExitDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = stringResource(id = R.string.game_over),
+                        text = stringResource(id = R.string.quit_game_confirm),
                         fontFamily = FontFamily.Default,
                         color = Color.Red,
                         fontWeight = FontWeight.Bold,
@@ -157,10 +179,11 @@ fun ExitDialog(
                 TextButton(
                     onClick = {
                         exitConfirm.value = false
+                        confirm()
                     }
                 ) {
                     Text(
-                        text = stringResource(id = R.string.game_over_again),
+                        text = stringResource(id = R.string.quit_game),
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Cursive,
                         fontSize = 20.sp,
@@ -170,11 +193,12 @@ fun ExitDialog(
             dismissButton = {
                 TextButton(
                     onClick = {
-                        exitConfirm.value = true
+                        exitConfirm.value = false
+                        dismiss()
                     }
                 ) {
                     Text(
-                        text = stringResource(id = R.string.game_over_quit),
+                        text = stringResource(id = R.string.quit_later),
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Cursive,
                         fontSize = 20.sp,
