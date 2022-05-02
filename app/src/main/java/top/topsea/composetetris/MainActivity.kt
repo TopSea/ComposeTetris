@@ -116,13 +116,15 @@ class MainActivity : ComponentActivity() {
                             this.finish()
                         }
                         "QUIT" -> {
-                            saveArray(applicationContext, tetris, tetrisFile)
-                            saveModel(applicationContext, currModel, modelFile)
-                            with(sharedPreferences.edit()) {
-                                putInt(getString(R.string.model_type_record), currModelType.value)
-                                apply()
+                            if (!gameOver.value) {
+                                saveArray(applicationContext, tetris, tetrisFile)
+                                saveModel(applicationContext, currModel, modelFile)
+                                with(sharedPreferences.edit()) {
+                                    putInt(getString(R.string.model_type_record), currModelType.value)
+                                    apply()
+                                }
+                                this.finish()
                             }
-                            this.finish()
                         }
                         "STOP" -> {
                             gameStop.value = true
@@ -192,7 +194,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     LaunchedEffect(key1 = newGame.value) {
-                        if (!newGame.value) {
+                        if (!newGame.value && hasRecord) {
                             modelData!!.forEachIndexed { index, before ->
                                 currModel[index] = before
                             }

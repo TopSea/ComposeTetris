@@ -59,7 +59,9 @@ fun ComeInDialog(
                     }
                 ) {
                     Text(
-                        text = stringResource(id = R.string.continue_before),
+                        text = if (hasRecord) stringResource(id = R.string.continue_before) else stringResource(
+                            id = R.string.play_confirm
+                        ),
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
                     )
