@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.DialogCompat
@@ -120,7 +121,10 @@ class MainActivity : ComponentActivity() {
                                 saveArray(applicationContext, tetris, tetrisFile)
                                 saveModel(applicationContext, currModel, modelFile)
                                 with(sharedPreferences.edit()) {
-                                    putInt(getString(R.string.model_type_record), currModelType.value)
+                                    putInt(
+                                        getString(R.string.model_type_record),
+                                        currModelType.value
+                                    )
                                     apply()
                                 }
                                 this.finish()
@@ -153,16 +157,40 @@ class MainActivity : ComponentActivity() {
                     }
                 )
 
-                Surface(
+                Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.app_name),
+                                    )
+                                }
+                            },
+                            backgroundColor = Color.White
+                        )
+                    }
                 ) {
-                    val listModel = listOf(Model.MODEL_O, Model.MODEL_T, Model.MODEL_S, Model.MODEL_Z, Model.MODEL_I, Model.MODEL_L, Model.MODEL_J)
+                    val listModel = listOf(
+                        Model.MODEL_O,
+                        Model.MODEL_T,
+                        Model.MODEL_S,
+                        Model.MODEL_Z,
+                        Model.MODEL_I,
+                        Model.MODEL_L,
+                        Model.MODEL_J
+                    )
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(y = (-30).dp)
                     ) {
                         Box(
                             contentAlignment = Alignment.TopStart,
@@ -220,7 +248,7 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(key1 = gameStop.value) {
                         if (!gameStop.value) {
                             while (true) {
-                                delay(800)
+                                delay(600)
                                 if (!modelPlaced.value) {
                                     normalDown(currModel, modelPlaced)
                                 }

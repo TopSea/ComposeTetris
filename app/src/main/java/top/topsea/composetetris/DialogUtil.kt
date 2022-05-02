@@ -2,6 +2,7 @@ package top.topsea.composetetris
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -13,10 +14,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import top.topsea.composetetris.tetris.clearBoard
+import top.topsea.composetetris.ui.theme.dialogBtn
+import top.topsea.composetetris.ui.theme.dialogText
+import top.topsea.composetetris.ui.theme.dialogTitle
 
 /**
  * @ProjectName:    ComposeTetris
@@ -36,7 +42,7 @@ fun ComeInDialog(
     if (showThis) {
         AlertDialog(
             onDismissRequest = { showThis = false },
-            text = {
+            title = {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -45,7 +51,7 @@ fun ComeInDialog(
                         text = if (hasRecord) stringResource(id = R.string.game_continue) else stringResource(
                             id = R.string.play_now
                         ),
-                        fontFamily = FontFamily.Cursive,
+                        fontFamily = dialogTitle,
                         fontWeight = FontWeight.Bold,
                         fontSize = 30.sp,
                     )
@@ -62,6 +68,7 @@ fun ComeInDialog(
                         text = if (hasRecord) stringResource(id = R.string.continue_before) else stringResource(
                             id = R.string.play_confirm
                         ),
+                        fontFamily = dialogBtn,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
                     )
@@ -77,6 +84,7 @@ fun ComeInDialog(
                     ) {
                         Text(
                             text = stringResource(id = R.string.game_new),
+                            fontFamily = dialogBtn,
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp,
                         )
@@ -104,7 +112,7 @@ fun GameOverDialog(
                 ) {
                     Text(
                         text = stringResource(id = R.string.game_over),
-                        fontFamily = FontFamily.Default,
+                        fontFamily = dialogTitle,
                         color = Color.Red,
                         fontWeight = FontWeight.Bold,
                         fontSize = 30.sp,
@@ -114,8 +122,10 @@ fun GameOverDialog(
             text = {
                 Text(
                     text = stringResource(id = R.string.final_score, finalScore),
+                    fontFamily = dialogText,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
+                    modifier = Modifier.offset(y = 10.dp)
                 )
             },
             confirmButton = {
@@ -129,7 +139,7 @@ fun GameOverDialog(
                     Text(
                         text = stringResource(id = R.string.game_over_again),
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Cursive,
+                        fontFamily = dialogBtn,
                         fontSize = 20.sp,
                     )
                 }
@@ -145,7 +155,7 @@ fun GameOverDialog(
                     Text(
                         text = stringResource(id = R.string.quit_game),
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Cursive,
+                        fontFamily = dialogBtn,
                         fontSize = 20.sp,
                     )
                 }
@@ -170,7 +180,7 @@ fun ExitDialog(
                 ) {
                     Text(
                         text = stringResource(id = R.string.quit_game_confirm),
-                        fontFamily = FontFamily.Default,
+                        fontFamily = dialogTitle,
                         color = Color.Red,
                         fontWeight = FontWeight.Bold,
                         fontSize = 30.sp,
@@ -187,7 +197,7 @@ fun ExitDialog(
                     Text(
                         text = stringResource(id = R.string.quit_game),
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Cursive,
+                        fontFamily = dialogBtn,
                         fontSize = 20.sp,
                     )
                 }
@@ -202,7 +212,7 @@ fun ExitDialog(
                     Text(
                         text = stringResource(id = R.string.quit_later),
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Cursive,
+                        fontFamily = dialogBtn,
                         fontSize = 20.sp,
                     )
                 }
